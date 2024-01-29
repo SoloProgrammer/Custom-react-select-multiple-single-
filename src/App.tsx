@@ -10,13 +10,30 @@ const options = [
   { value: 5, label: "Fifth" },
 ];
 function App() {
-  const [value, setValue] = useState<(typeof options)[0]>(options[1]);
-  const handleChange = (value: SelectOption) => {
+  const [value, setValue] = useState<SelectOption | undefined>(options[0]);
+  const [value1, setValue1] = useState<SelectOption[]>([options[0]]);
+  const handleChange = (value: SelectOption | undefined) => {
     setValue(value);
+  };
+  const handleChange1 = (value: SelectOption[]) => {
+    setValue1(value);
   };
   return (
     <>
-      <Select value={value} options={options} onChange={handleChange} />
+      <Select
+        key={"new 1"}
+        value={value}
+        options={options}
+        onChange={handleChange}
+      />
+      <br />
+      <Select
+        key={"new 2"}
+        multiple
+        value={value1}
+        options={options}
+        onChange={handleChange1}
+      />
     </>
   );
 }
