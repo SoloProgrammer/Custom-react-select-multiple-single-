@@ -1,144 +1,137 @@
-import { useEffect, useRef, useState } from "react";
+import { MouseEvent, useEffect, useRef, useState } from "react";
 import styles from "./react-select.module.css";
 
-export type SelectOption = {
+type SelectOption = {
   label: string;
-  value: number;
-};
-
-type SingleSelectProps = {
-  value?: SelectOption;
-  multiple?: false;
-  onChange: (value: SelectOption | undefined) => void;
+  value: any;
 };
 
 type MultiSelectProps = {
-  value: SelectOption[];
   multiple: true;
+  value: SelectOption[];
   onChange: (value: SelectOption[]) => void;
+};
+type SingleSelectProps = {
+  multiple?: false;
+  value: SelectOption | undefined;
+  onChange: (value: SelectOption | undefined) => void;
 };
 
 type SelectProps = {
   options: SelectOption[];
-} & (SingleSelectProps | MultiSelectProps);
+} & (MultiSelectProps | SingleSelectProps);
 
 const Select = ({ multiple, value, options, onChange }: SelectProps) => {
-  const [isOpen, setIsOpen] = useState<Boolean>(false);
+  const [isOpen, setIsOpen] = useState<boolean>(false);
 
-  const handleClear = () => {
+  const clearValue = (e: MouseEvent<HTMLSpanElement>) => {
+    e.stopPropagation();
     multiple ? onChange([]) : onChange(undefined);
   };
-
   const handleSelect = (option: SelectOption) => {
     if (multiple) {
       if (value.includes(option)) {
-        onChange(value.filter((o) => o !== option));
-      } else onChange([...value, option]);
-    } else {
-      option !== value && onChange(option);
-    }
+        onChange(value.filter((v) => v !== option));
+      } else {
+        onChange([...value, option]);
+      }
+    } else onChange(option);
   };
 
-  const [highlightedIndex, setHighlightedIndex] = useState(0);
-
-  const isOptionSelected = (option: SelectOption) => {
-    return multiple ? value.includes(option) : option === value;
+  const isSelected = (option: SelectOption) => {
+    return multiple ? value.includes(option) : value === option;
   };
+
+  const [highligtedIndex, setHighligtedIndex] = useState(0);
 
   const containerRef = useRef<HTMLDivElement>(null);
-
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      console.log(e.code);
-
       switch (e.code) {
+        case "Space":
+          setIsOpen(prev => !prev)
+          break
         case "Backspace":
           {
             if (multiple) {
               const lastItem = value[value.length - 1];
-              handleSelect(lastItem);
-            } else {
-              onChange(undefined);
-            }
+              onChange(value.filter((val) => val !== lastItem));
+            } else onChange(undefined);
           }
           break;
+        case "ArrowDown":
         case "ArrowUp":
-        case "ArrowDown": {
-          const newIndexValue =
-            highlightedIndex + (e.code === "ArrowDown" ? 1 : -1);
-
-          newIndexValue >= 0 &&
-            newIndexValue < options.length &&
-            setHighlightedIndex(newIndexValue);
-          break;
-        }
-        case "Space":
-          setIsOpen((prev) => !prev);
+          {
+            const newIndexVal =
+              highligtedIndex + (e.code === "ArrowDown" ? 1 : -1);
+            newIndexVal >= 0 &&
+              newIndexVal < options.length &&
+              setHighligtedIndex(newIndexVal);
+          }
           break;
         case "Enter":
-          handleSelect(options[highlightedIndex]);
-          setIsOpen(false);
+          {
+            if (multiple) {
+              handleSelect(options[highligtedIndex]);
+            } else onChange(options[highligtedIndex]);
+          }
           break;
         default:
           break;
       }
     };
-
-    containerRef?.current?.addEventListener("keydown", handler);
-
+    if (containerRef.current) {
+      containerRef.current.addEventListener("keydown", handler);
+    }
     return () => containerRef?.current?.removeEventListener("keydown", handler);
-  }, [options, value, highlightedIndex]);
-
-  useEffect(() => {
-    isOpen && setHighlightedIndex(0);
-  }, [isOpen]);
+  }, [options, value, highligtedIndex]);
 
   return (
     <div
+      ref={containerRef}
       onBlur={() => setIsOpen(false)}
       onClick={() => setIsOpen((prev) => !prev)}
       tabIndex={0}
       className={styles.container}
-      ref={containerRef}
     >
-      <span className={styles.value}>
-        {multiple
-          ? value.map((val) => (
-              <div
+      {/* value */}
+      <div className={styles.value}>
+        {multiple ? (
+          <>
+            {value.map((val) => (
+              <button
                 onClick={(e) => {
-                  handleSelect(val);
                   e.stopPropagation();
+                  handleSelect(val);
                 }}
-                key={val.value}
                 className={styles.chip}
+                key={val.value}
               >
-                <span>{val.label}</span>
-                <span className={styles.remove}>&times;</span>
-              </div>
-            ))
-          : value?.label}
-      </span>
-      <div className={styles.actions}>
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            handleClear();
-          }}
-          className={styles["clear-btn"]}
-        >
-          &times;
-        </button>
-        <span className={styles["divider"]}></span>
-        <button className={styles["caret"]}></button>
+                {val.label} <span>&times;</span>
+              </button>
+            ))}
+          </>
+        ) : (
+          value?.label
+        )}
       </div>
+      {/* actions */}
+      <div className={styles.actions}>
+        <span onClick={(e) => clearValue(e)} className={styles["clear-btn"]}>
+          &times;
+        </span>
+        <span className={styles["divider"]}></span>
+        <span className={styles["caret"]}></span>
+      </div>
+      {/* options */}
       {isOpen && (
         <ul className={styles.options}>
-          {options?.map((option: SelectOption, index: number) => (
+          {options?.map((option, index) => (
             <li
-              className={`${styles.option} ${
-                isOptionSelected(option) ? styles.selected : ""
-              } ${highlightedIndex === index ? styles.highlighted : ""}`}
               onClick={() => handleSelect(option)}
+              className={`${styles.option} ${
+                isSelected(option) ? styles.selected : ""
+              } ${highligtedIndex === index ? styles.highlighted : ""}`}
               key={option.value}
             >
               {option.label}

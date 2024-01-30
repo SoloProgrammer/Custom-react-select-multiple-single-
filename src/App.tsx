@@ -1,6 +1,6 @@
 import { useState } from "react";
 import "./App.css";
-import Select, { SelectOption } from "./components/react-select/Select";
+import Select from "./components/react-select/Select";
 
 const options = [
   { value: 1, label: "First" },
@@ -10,29 +10,26 @@ const options = [
   { value: 5, label: "Fifth" },
 ];
 function App() {
-  const [value, setValue] = useState<SelectOption | undefined>(options[0]);
-  const [value1, setValue1] = useState<SelectOption[]>([options[0]]);
-  const handleChange = (value: SelectOption | undefined) => {
-    setValue(value);
-  };
-  const handleChange1 = (value: SelectOption[]) => {
-    setValue1(value);
-  };
+  const [value, setValue] = useState<(typeof options)[0] | undefined>(
+    options[0]
+  );
+
+  const [value1, setValue1] = useState<typeof options>([options[0]]);
   return (
     <>
       <Select
-        key={"new 1"}
+        key={new Date().getTime()}
         value={value}
         options={options}
-        onChange={handleChange}
+        onChange={(o) => setValue(o)}
       />
       <br />
       <Select
-        key={"new 2"}
+        key={new Date().getTime() + 1}
         multiple
         value={value1}
         options={options}
-        onChange={handleChange1}
+        onChange={(o) => setValue1(o)}
       />
     </>
   );
